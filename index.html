@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillNFT — Minting Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0e1320;
+    --border: rgba(120,200,255,0.12);
+    --accent: #00d4ff;
+    --accent2: #a855f7;
+    --accent3: #f0ff44;
+    --text: #e8f0ff;
+    --muted: #4a5878;
+    --success: #22ff88;
+    --error: #ff4466;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow blobs */
+  .blob1, .blob2 {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    animation: floatBlob 8s ease-in-out infinite;
+  }
+  .blob2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%);
+    bottom: -50px; left: -50px;
+    animation: floatBlob 10s ease-in-out infinite reverse;
+  }
+
+  @keyframes floatBlob {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, -30px); }
+  }
+
+  /* Layout */
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .wallet-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .wallet-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .wallet-chip.connected { color: var(--success); border-color: rgba(34,255,136,0.3); }
+  .wallet-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+  .wallet-chip.connected .wallet-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.25);
+    border-radius: 50px;
+    padding: 6px 16px;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 4rem;
+    padding: 1.5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+  }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* NFT Preview Card */
+  .nft-preview-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .nft-canvas {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: #0a0d18;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nft-canvas canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .nft-placeholder-text {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .nft-placeholder-text .big-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .nft-placeholder-text p {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .nft-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .meta-chip {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid rgba(0,212,255,0.1);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .meta-chip .label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .meta-chip .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  /* Mint Panel */
+  .mint-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field-group label {
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .field-group input, .field-group textarea {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+
+  .field-group input:focus, .field-group textarea:focus {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.04);
+  }
+
+  .field-group input::placeholder, .field-group textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+  }
+
+  /* Contract address input */
+  .contract-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .contract-row input {
+    flex: 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .contract-row input:focus { border-color: var(--accent); }
+  .contract-row input::placeholder { color: var(--muted); font-size: 11px; }
+
+  .set-btn {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 10px;
+    color: var(--accent);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .set-btn:hover { background: rgba(0,212,255,0.2); }
+
+  /* NFT Type selector */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .type-btn {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .type-btn .icon { font-size: 1.4rem; display: block; margin-bottom: 5px; }
+
+  .type-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .type-btn.active {
+    border-color: var(--accent2);
+    background: rgba(168,85,247,0.12);
+    color: var(--accent2);
+  }
+
+  /* Mint button */
+  .mint-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: white;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .mint-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .mint-btn:hover::before { opacity: 1; }
+  .mint-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(168,85,247,0.4); }
+  .mint-btn:active { transform: translateY(0); }
+  .mint-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .mint-btn.loading {
+    pointer-events: none;
+  }
+
+  .mint-btn .btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Alert */
+  .alert-box {
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .alert-box.show { display: block; }
+  .alert-box.info { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); }
+  .alert-box.success { background: rgba(34,255,136,0.08); border: 1px solid rgba(34,255,136,0.25); color: var(--success); }
+  .alert-box.error { background: rgba(255,68,102,0.08); border: 1px solid rgba(255,68,102,0.25); color: var(--error); }
+
+  /* Minted NFTs Gallery */
+  .gallery-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .section-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 50px;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .nft-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .nft-card:hover {
+    border-color: var(--accent2);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(168,85,247,0.2);
+  }
+
+  .nft-card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #0a0d18, #12182e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nft-card-img::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(0,212,255,0.1));
+  }
+
+  .nft-card-body {
+    padding: 12px;
+  }
+
+  .nft-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nft-card-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+  }
+
+  .empty-gallery {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+  }
+
+  /* Progress bar */
+  .supply-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .supply-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .supply-label { color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .supply-count { color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; }
+
+  .progress-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 50px;
+    transition: width 0.6s ease;
+    width: 0%;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* TX Hash display */
+  .tx-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    word-break: break-all;
+    margin-top: 6px;
+    color: var(--accent2);
+    opacity: 0.7;
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confettiFall 3s ease-out forwards;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob1"></div>
+<div class="blob2"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">Skill<span>NFT</span> · SNFT</div>
+    <div class="wallet-chip" id="walletChip" onclick="connectWallet()">
+      <div class="wallet-dot" id="walletDot"></div>
+      <span id="walletText">Connect Wallet</span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-tag">⬡ ERC-721 · Ethereum Blockchain</div>
+    <h1>Mint Your NFT<br>On-Chain</h1>
+    <p>Create unique digital assets secured by smart contracts. Each NFT is verifiable, permanent, and truly yours.</p>
+  </div>
+
+  <!-- Contract Address Row -->
+  <div style="margin-bottom: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem 1.5rem;">
+    <div class="panel-title" style="margin-bottom: 10px;">0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266</div>
+    <div class="contract-row">
+      <input type="text" id="contractInput" placeholder="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" />
+      <button class="set-btn" onclick="setContract()">Set Address</button>
+    </div>
+    <div id="contractStatus" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;">No contract set — demo mode active</div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val" id="statMinted">0</div>
+      <div class="stat-label">Minted</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-val">100</div>
+      <div class="stat-label">Max Supply</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-val">0.01</div>
+      <div class="stat-label">ETH Price</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-val">SNFT</div>
+      <div class="stat-label">Symbol</div>
+    </div>
+  </div>
+
+  <!-- Supply Progress -->
+  <div class="supply-bar">
+    <div class="supply-header">
+      <span class="supply-label">SUPPLY MINTED</span>
+      <span class="supply-count"><span id="progressNum">0</span> / 100 NFTs</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- NFT Preview -->
+    <div class="nft-preview-panel">
+      <div>
+        <div class="panel-title">NFT Preview</div>
+      </div>
+
+      <div class="nft-canvas" id="nftCanvas">
+        <canvas id="previewCanvas"></canvas>
+        <div class="nft-placeholder-text" id="placeholderText">
+          <div class="big-icon">🖼</div>
+          <p>Enter name to<br>generate preview</p>
+        </div>
+      </div>
+
+      <div class="nft-meta">
+        <div class="meta-chip">
+          <div class="label">Collection</div>
+          <div class="val">SkillNFT</div>
+        </div>
+        <div class="meta-chip">
+          <div class="label">Standard</div>
+          <div class="val">ERC-721</div>
+        </div>
+        <div class="meta-chip">
+          <div class="label">Chain</div>
+          <div class="val">Ethereum</div>
+        </div>
+        <div class="meta-chip">
+          <div class="label">Token ID</div>
+          <div class="val" id="previewTokenId">#---</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mint Panel -->
+    <div class="mint-panel">
+      <div>
+        <div class="panel-title">Mint New NFT</div>
+      </div>
+
+      <div class="field-group">
+        <label>NFT Name</label>
+        <input type="text" id="nftName" placeholder="e.g. Cosmic Dragon #001" oninput="updatePreview()" maxlength="50" />
+      </div>
+
+      <div class="field-group">
+        <label>Description</label>
+        <textarea id="nftDesc" placeholder="Describe your NFT..." rows="3" maxlength="200"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label>NFT Type</label>
+        <div class="type-grid">
+          <div class="type-btn active" onclick="selectType(this, 'Art')" data-type="Art">
+            <span class="icon">🎨</span>Art
+          </div>
+          <div class="type-btn" onclick="selectType(this, 'Gaming')" data-type="Gaming">
+            <span class="icon">🎮</span>Gaming
+          </div>
+          <div class="type-btn" onclick="selectType(this, 'Music')" data-type="Music">
+            <span class="icon">🎵</span>Music
+          </div>
+          <div class="type-btn" onclick="selectType(this, 'Photo')" data-type="Photo">
+            <span class="icon">📷</span>Photo
+          </div>
+          <div class="type-btn" onclick="selectType(this, 'Sports')" data-type="Sports">
+            <span class="icon">⚡</span>Sports
+          </div>
+          <div class="type-btn" onclick="selectType(this, 'Utility')" data-type="Utility">
+            <span class="icon">🔑</span>Utility
+          </div>
+        </div>
+      </div>
+
+      <div id="alertBox" class="alert-box info show">Connect your wallet and set contract address to mint</div>
+
+      <button class="mint-btn" id="mintBtn" onclick="mintNFT()" disabled>
+        <div class="btn-inner">
+          <div class="spinner" id="spinner"></div>
+          <span id="mintBtnText">⬡ Mint NFT</span>
+        </div>
+      </button>
+
+      <button class="mint-btn" id="freeMintBtn" onclick="freeMint()" disabled
+        style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); color: var(--accent); margin-top: -4px;">
+        <div class="btn-inner">
+          <span>🎁 Free Mint (Demo)</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Gallery -->
+  <div class="gallery-section">
+    <div class="section-header">
+      <div class="section-title">Minted NFTs</div>
+      <div class="section-badge" id="galleryCount">0 items</div>
+    </div>
+    <div class="gallery-grid" id="galleryGrid">
+      <div class="empty-gallery">
+        No NFTs minted yet. Be the first! →
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    SkillNFT · SkillInfytech Blockchain Internship · 2026 · Built on Ethereum
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<script>
+// ========== STATE ==========
+let contract = null;
+let signer = null;
+let provider = null;
+let selectedType = 'Art';
+let mintedNFTs = [];
+let contractAddress = null;
+let demoMintCount = 0;
+
+const ABI = [
+  "function mintNFT(string memory tokenURI) public payable returns (uint256)",
+  "function freeMint(string memory tokenURI) public returns (uint256)",
+  "function totalMinted() public view returns (uint256)",
+  "function maxSupply() public view returns (uint256)",
+  "event NFTMinted(address indexed owner, uint256 indexed tokenId, string tokenURI)"
+];
+
+// ========== CANVAS PREVIEW ==========
+const typeColors = {
+  'Art':     ['#a855f7', '#00d4ff'],
+  'Gaming':  ['#22ff88', '#00d4ff'],
+  'Music':   ['#f0ff44', '#ff6b35'],
+  'Photo':   ['#00d4ff', '#a855f7'],
+  'Sports':  ['#ff4466', '#f0ff44'],
+  'Utility': ['#00d4ff', '#22ff88']
+};
+
+const typeIcons = {
+  'Art': '🎨', 'Gaming': '🎮', 'Music': '🎵',
+  'Photo': '📷', 'Sports': '⚡', 'Utility': '🔑'
+};
+
+function drawPreview(name, type) {
+  const canvas = document.getElementById('previewCanvas');
+  const canvasEl = document.getElementById('nftCanvas');
+  const placeholder = document.getElementById('placeholderText');
+
+  const size = canvasEl.offsetWidth || 300;
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const colors = typeColors[type] || ['#a855f7', '#00d4ff'];
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#080b12');
+  grad.addColorStop(0.5, '#0e1320');
+  grad.addColorStop(1, '#080b12');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < size; x += 30) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+  }
+  for (let y = 0; y < size; y += 30) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+  }
+
+  // Glow orb
+  const glow = ctx.createRadialGradient(size*0.5, size*0.45, 0, size*0.5, size*0.45, size*0.35);
+  glow.addColorStop(0, colors[0] + '30');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, size, size);
+
+  // Corner accent
+  const corner = ctx.createLinearGradient(0, 0, size*0.4, size*0.4);
+  corner.addColorStop(0, colors[1] + '20');
+  corner.addColorStop(1, 'transparent');
+  ctx.fillStyle = corner;
+  ctx.fillRect(0, 0, size, size);
+
+  // Hexagon shape
+  ctx.save();
+  ctx.translate(size * 0.5, size * 0.42);
+  const r = size * 0.2;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const px = r * Math.cos(angle), py = r * Math.sin(angle);
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  const hexGrad = ctx.createLinearGradient(-r, -r, r, r);
+  hexGrad.addColorStop(0, colors[0] + 'cc');
+  hexGrad.addColorStop(1, colors[1] + 'cc');
+  ctx.fillStyle = hexGrad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Icon
+  ctx.font = `${size * 0.12}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(typeIcons[type] || '⬡', 0, 0);
+  ctx.restore();
+
+  // NFT name
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = `bold ${Math.min(size * 0.055, 18)}px Syne, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const displayName = name.length > 18 ? name.slice(0, 18) + '…' : name;
+  ctx.fillText(displayName || 'Untitled NFT', size * 0.5, size * 0.74);
+
+  // Type label
+  ctx.fillStyle = colors[0];
+  ctx.font = `${size * 0.035}px Space Mono, monospace`;
+  ctx.fillText(type.toUpperCase() + ' · ERC-721', size * 0.5, size * 0.83);
+
+  // Border glow
+  ctx.strokeStyle = colors[0] + '50';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, size - 2, size - 2);
+
+  placeholder.style.display = 'none';
+}
+
+function updatePreview() {
+  const name = document.getElementById('nftName').value;
+  if (name.trim()) {
+    drawPreview(name, selectedType);
+  } else {
+    document.getElementById('placeholderText').style.display = 'block';
+    const canvas = document.getElementById('previewCanvas');
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function selectType(el, type) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedType = type;
+  updatePreview();
+}
+
+// ========== CONTRACT ==========
+function setContract() {
+  const addr = document.getElementById('contractInput').value.trim();
+  if (!addr || addr.length < 10) {
+    showAlert('Enter a valid contract address', 'error'); return;
+  }
+  contractAddress = addr;
+  document.getElementById('contractStatus').textContent = '✅ Contract set: ' + addr.slice(0,6) + '...' + addr.slice(-4);
+  document.getElementById('contractStatus').style.color = 'var(--success)';
+
+  if (signer) {
+    contract = new ethers.Contract(contractAddress, ABI, signer);
+    document.getElementById('freeMintBtn').disabled = false;
+    document.getElementById('mintBtn').disabled = false;
+    loadStats();
+    showAlert('Contract connected! Ready to mint.', 'success');
+  } else {
+    showAlert('Contract saved. Connect wallet to mint.', 'info');
+  }
+}
+
+// ========== WALLET ==========
+async function connectWallet() {
+  if (!window.ethereum) {
+    showAlert('MetaMask not found! Install from metamask.io', 'error'); return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    const addr = accounts[0];
+    const short = addr.slice(0,6) + '...' + addr.slice(-4);
+
+    document.getElementById('walletText').textContent = short;
+    document.getElementById('walletChip').classList.add('connected');
+
+    if (contractAddress) {
+      contract = new ethers.Contract(contractAddress, ABI, signer);
+      document.getElementById('mintBtn').disabled = false;
+      document.getElementById('freeMintBtn').disabled = false;
+      loadStats();
+      showAlert('Wallet connected! Ready to mint.', 'success');
+    } else {
+      document.getElementById('freeMintBtn').disabled = false;
+      showAlert('Wallet connected. Set contract address to mint on-chain.', 'info');
+    }
+  } catch(e) {
+    showAlert('Wallet connection failed: ' + e.message, 'error');
+  }
+}
+
+// ========== STATS ==========
+async function loadStats() {
+  if (!contract) return;
+  try {
+    const total = Number(await contract.totalMinted());
+    updateStats(total);
+  } catch(e) { console.log('Stats load error:', e); }
+}
+
+function updateStats(minted) {
+  document.getElementById('statMinted').textContent = minted;
+  document.getElementById('progressNum').textContent = minted;
+  const pct = (minted / 100 * 100).toFixed(1);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ========== MINT ==========
+function buildTokenURI(name, desc, type) {
+  const metadata = {
+    name: name,
+    description: desc || `A ${type} NFT from SkillNFT collection`,
+    image: "ipfs://placeholder_image_hash",
+    attributes: [
+      { trait_type: "Type", value: type },
+      { trait_type: "Collection", value: "SkillNFT" },
+      { trait_type: "Minted Via", value: "SkillInfytech Platform" }
+    ]
+  };
+  return "data:application/json;base64," + btoa(JSON.stringify(metadata));
+}
+
+async function mintNFT() {
+  const name = document.getElementById('nftName').value.trim();
+  if (!name) { showAlert('Enter an NFT name first!', 'error'); return; }
+
+  if (!contract) { showAlert('Set contract address first!', 'error'); return; }
+
+  setBtnLoading(true, 'Confirm in MetaMask...');
+  showAlert('Waiting for MetaMask confirmation...', 'info');
+
+  try {
+    const tokenURI = buildTokenURI(name, document.getElementById('nftDesc').value, selectedType);
+    const tx = await contract.mintNFT(tokenURI, { value: ethers.parseEther("0.01") });
+    setBtnLoading(true, 'Mining transaction...');
+    showAlert('Transaction sent! Waiting for confirmation... TX: ' + tx.hash.slice(0,10) + '...', 'info');
+
+    const receipt = await tx.wait();
+    setBtnLoading(false);
+
+    const tokenId = '#' + (demoMintCount + 1 + receipt.blockNumber);
+    document.getElementById('previewTokenId').textContent = tokenId;
+
+    addToGallery(name, selectedType, tokenId, tx.hash);
+    loadStats();
+    triggerConfetti();
+    showAlert(`✅ NFT Minted! "${name}" — TX confirmed on blockchain.\n${tx.hash}`, 'success');
+    document.getElementById('nftName').value = '';
+
+  } catch(e) {
+    setBtnLoading(false);
+    showAlert('Mint failed: ' + (e.reason || e.message), 'error');
+  }
+}
+
+async function freeMint() {
+  const name = document.getElementById('nftName').value.trim() || `Demo NFT #${demoMintCount + 1}`;
+
+  if (contract) {
+    setBtnLoading(true, 'Free minting...', 'free');
+    try {
+      const tokenURI = buildTokenURI(name, document.getElementById('nftDesc').value, selectedType);
+      const tx = await contract.freeMint(tokenURI);
+      showAlert('Free mint submitted! Waiting...', 'info');
+      await tx.wait();
+      setBtnLoading(false, '', 'free');
+
+      demoMintCount++;
+      const tokenId = '#' + demoMintCount;
+      document.getElementById('previewTokenId').textContent = tokenId;
+
+      addToGallery(name, selectedType, tokenId, tx.hash);
+      loadStats();
+      triggerConfetti();
+      showAlert(`🎁 Free Mint Success! "${name}" minted!`, 'success');
+      document.getElementById('nftName').value = '';
+      return;
+    } catch(e) {
+      setBtnLoading(false, '', 'free');
+    }
+  }
+
+  // Demo mode (no contract)
+  demoMintCount++;
+  const tokenId = '#' + demoMintCount;
+  document.getElementById('previewTokenId').textContent = tokenId;
+  updateStats(demoMintCount);
+  drawPreview(name, selectedType);
+  addToGallery(name, selectedType, tokenId, '0xdemo_' + Date.now().toString(16));
+  triggerConfetti();
+  showAlert(`🎨 Demo minted: "${name}" (Token ${tokenId}). Set contract for real on-chain minting!`, 'success');
+  document.getElementById('nftName').value = '';
+}
+
+// ========== GALLERY ==========
+function addToGallery(name, type, tokenId, txHash) {
+  mintedNFTs.push({ name, type, tokenId, txHash });
+  const grid = document.getElementById('galleryGrid');
+
+  if (mintedNFTs.length === 1) {
+    grid.innerHTML = '';
+  }
+
+  const card = document.createElement('div');
+  card.className = 'nft-card';
+  card.innerHTML = `
+    <div class="nft-card-img">${typeIcons[type] || '⬡'}</div>
+    <div class="nft-card-body">
+      <div class="nft-card-name">${name}</div>
+      <div class="nft-card-id">${tokenId} · ${type}</div>
+    </div>
+  `;
+  grid.prepend(card);
+
+  document.getElementById('galleryCount').textContent = mintedNFTs.length + ' items';
+}
+
+// ========== UI HELPERS ==========
+function showAlert(msg, type) {
+  const box = document.getElementById('alertBox');
+  box.textContent = msg;
+  box.className = `alert-box ${type} show`;
+}
+
+function setBtnLoading(loading, text = '⬡ Mint NFT', which = 'main') {
+  const btn = which === 'free' ? document.getElementById('freeMintBtn') : document.getElementById('mintBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('mintBtnText');
+
+  if (loading) {
+    spinner.style.display = 'block';
+    if (btnText) btnText.textContent = text;
+    btn.disabled = true;
+    btn.classList.add('loading');
+  } else {
+    spinner.style.display = 'none';
+    if (btnText) btnText.textContent = '⬡ Mint NFT';
+    btn.disabled = !contract && !window.ethereum;
+    btn.classList.remove('loading');
+  }
+}
+
+function triggerConfetti() {
+  const colors = ['#a855f7', '#00d4ff', '#f0ff44', '#22ff88', '#ff4466'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: 0;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        transform: rotate(${Math.random() * 360}deg);
+        animation-duration: ${2 + Math.random() * 2}s;
+        animation-delay: ${Math.random() * 0.5}s;
+      `;
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4000);
+    }, i * 20);
+  }
+}
+
+// Init
+window.addEventListener('load', () => {
+  // Auto-connect if previously connected
+  if (window.ethereum && window.ethereum.selectedAddress) {
+    connectWallet();
+  }
+});
+</script>
+</body>
+</html>
